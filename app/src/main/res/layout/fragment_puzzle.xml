@@ -1,14 +1,115 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1A1C1F">
+    android:background="#071013">
 
+    <!-- los botones de tamaño arriba -->
+    <LinearLayout
+        android:id="@+id/size_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="16dp">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn3x3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3x3"
+            android:layout_margin="4dp"
+            android:background="@drawable/retro_button_base"
+            android:backgroundTint="#D81E5B"
+            android:textColor="#F7F7FF"
+            android:textAllCaps="false"
+            android:fontFamily="@font/silkscreen_bold"/>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn4x4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="4x4"
+            android:layout_margin="4dp"
+            android:background="@drawable/retro_button_base"
+            android:backgroundTint="#00CECB"
+            android:textColor="#071013"
+            android:textAllCaps="false"
+            android:fontFamily="@font/silkscreen_bold"/>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn5x5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="5x5"
+            android:layout_margin="4dp"
+            android:background="@drawable/retro_button_base"
+            android:backgroundTint="#FF9F1C"
+            android:textColor="#071013"
+            android:textAllCaps="false"
+            android:fontFamily="@font/silkscreen_bold"/>
+    </LinearLayout>
+
+    <!-- el cronometro justo debajo de los tamaños -->
+    <FrameLayout
+        android:id="@+id/timer_holder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/size_container" />
+
+    <!-- el grid del puzzle en el centro -->
     <GridLayout
         android:id="@+id/puzzle_grid"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:padding="8dp" />
+
+    <!-- botones de control abajo -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/puzzle_grid"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="24dp"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnPickImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="IMAGEN"
+            android:background="@drawable/retro_button_base"
+            android:backgroundTint="#00CECB"
+            android:textColor="#071013"
+            android:textAllCaps="false"
+            android:fontFamily="@font/silkscreen_regular"/>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_shuffle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="MEZCLAR"
+            android:background="@drawable/retro_button_base"
+            android:backgroundTint="#FF9F1C"
+            android:textColor="#071013"
+            android:textAllCaps="false"
+            android:fontFamily="@font/silkscreen_regular"/>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_solve"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="RESOLVER"
+            android:background="@drawable/retro_button_base"
+            android:backgroundTint="#00CECB"
+            android:textColor="#071013"
+            android:textAllCaps="false"
+            android:fontFamily="@font/silkscreen_regular"/>
+
+    </LinearLayout>
 
 </RelativeLayout>

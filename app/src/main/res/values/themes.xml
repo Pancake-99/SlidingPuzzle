@@ -1,8 +1,29 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.SlidingPuzzle" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- Default font for the app -->
+        <item name="android:fontFamily">@font/silkscreen_bold</item>
+        <item name="fontFamily">@font/silkscreen_bold</item>
+
+        <!-- Use our custom retro button style by default -->
+        <item name="materialButtonStyle">@style/Widget.App.Button</item>
+    </style>
+
+    <style name="Widget.App.Button" parent="Widget.Material3.Button">
+        <item name="android:fontFamily">@font/silkscreen_bold</item>
+        <item name="fontFamily">@font/silkscreen_bold</item>
+        <item name="android:background">@drawable/retro_button_base</item>
+        <item name="backgroundTint">@null</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:insetLeft">0dp</item>
+        <item name="android:insetRight">0dp</item>
+        <item name="cornerRadius">0dp</item>
+    </style>
+
+    <style name="Widget.App.Button.Regular" parent="Widget.App.Button">
+        <item name="android:fontFamily">@font/silkscreen_regular</item>
+        <item name="fontFamily">@font/silkscreen_regular</item>
     </style>
 
     <style name="Theme.SlidingPuzzle" parent="Base.Theme.SlidingPuzzle" />

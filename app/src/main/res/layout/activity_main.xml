@@ -5,56 +5,69 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1A1C1F"
+    android:background="#071013"
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <LinearLayout
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="SLIDING PUZZLE"
+        android:textColor="#F7F7FF"
+        android:textSize="32sp"
+        android:fontFamily="@font/silkscreen_bold"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="8dp" />
+
+    <FrameLayout
+        android:id="@+id/timer_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:padding="16dp">
-
-        <Button
-            android:id="@+id/btn3x3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="3x3"
-            android:layout_margin="4dp"/>
-
-        <Button
-            android:id="@+id/btn4x4"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="4x4"
-            android:layout_margin="4dp"/>
-
-        <Button
-            android:id="@+id/btn5x5"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="5x5"
-            android:layout_margin="4dp"/>
-    </LinearLayout>
+        android:background="#071013" />
 
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:background="#071013" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:background="#071013"
+        android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/btnPickImage"
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_highscores"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Pick Image" />
+            android:layout_marginEnd="8dp"
+            android:text="RECORDS"
+            android:background="@drawable/retro_button_base"
+            android:backgroundTint="#D81E5B"
+            android:textColor="#F7F7FF"
+            android:textAllCaps="false"
+            android:fontFamily="@font/silkscreen_bold" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_help"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:text="?"
+            android:background="@drawable/retro_button_base"
+            android:backgroundTint="#FF9F1C"
+            android:textColor="#071013"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:padding="0dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:fontFamily="@font/silkscreen_bold" />
     </LinearLayout>
 
 </LinearLayout>
