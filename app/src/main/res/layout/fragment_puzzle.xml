@@ -51,19 +51,36 @@
             android:fontFamily="@font/silkscreen_bold"/>
     </LinearLayout>
 
-    <!-- el cronometro justo debajo de los tamaños -->
-    <FrameLayout
-        android:id="@+id/timer_holder"
+    <!-- Fila superior con guía y cronómetro -->
+    <LinearLayout
+        android:id="@+id/top_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/size_container" />
+        android:layout_below="@id/size_container"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <GridLayout
+            android:id="@+id/guide_grid"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent" />
+
+        <FrameLayout
+            android:id="@+id/timer_holder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp" />
+    </LinearLayout>
 
     <!-- el grid del puzzle en el centro -->
     <GridLayout
         android:id="@+id/puzzle_grid"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/top_row"
+        android:layout_marginTop="8dp"
         android:padding="8dp" />
 
     <!-- botones de control abajo -->

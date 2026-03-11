@@ -42,6 +42,7 @@ public abstract class PuzzleFragment extends Fragment {
     protected int size;
     protected String imageUriString;
     private GridLayout puzzleGrid;
+    private GridLayout guideGrid;
     private List<TextView> vTv = new ArrayList<>();
     private int pivot;
     private Bitmap[] tileBitmaps;
@@ -67,6 +68,7 @@ public abstract class PuzzleFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_puzzle, container, false);
         puzzleGrid = view.findViewById(R.id.puzzle_grid);
+        guideGrid = view.findViewById(R.id.guide_grid);
         
         //botones de tamaño
         view.findViewById(R.id.btn3x3).setOnClickListener(v -> ((MainActivity)getActivity()).changeSizeWithConfirmation(3));
@@ -194,6 +196,47 @@ public abstract class PuzzleFragment extends Fragment {
             vTv.add(tv);
             puzzleGrid.addView(tv);
         }
+        setupGuideGrid();
+    }
+
+    private void setupGuideGrid() {
+        if (guideGrid == null) return;
+        guideGrid.removeAllViews();
+        guideGrid.setRowCount(size);
+        guideGrid.setColumnCount(size);
+        int totalPieces = size * size;
+        int guideTileSize = dpToPx(72 / size);
+        
+        for (int i = 0; i < totalPieces; i++) {
+            TextView tv = new TextView(getContext());
+            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+            params.width = guideTileSize;
+            params.height = guideTileSize;
+            params.setMargins(dpToPx(1), dpToPx(1), dpToPx(1), dpToPx(1));
+            tv.setLayoutParams(params);
+            tv.setGravity(android.view.Gravity.CENTER);
+            tv.setTextSize(size > 4 ? 6 : 8);
+            // No usamos rounded corners para la guía
+            tv.setClipToOutline(false);
+            tv.setTextColor(Color.parseColor("#071013"));
+            tv.setTypeface(ResourcesCompat.getFont(getContext(), R.font.silkscreen_bold));
+            
+            if (i == totalPieces - 1) {
+                tv.setText("");
+                tv.setBackgroundColor(Color.TRANSPARENT);
+            } else {
+                if (tileBitmaps != null && tileBitmaps[i] != null) {
+                    tv.setText("");
+                    // Drawable cuadrado para la imagen
+                    tv.setBackground(new BitmapDrawable(getResources(), tileBitmaps[i]));
+                } else {
+                    tv.setText(String.valueOf(i + 1));
+                    // Color sólido cuadrado
+                    tv.setBackgroundColor(getTileColor(i));
+                }
+            }
+            guideGrid.addView(tv);
+        }
     }
 
     private int getTileColor(int i) {
@@ -219,13 +262,13 @@ public abstract class PuzzleFragment extends Fragment {
                     timerStarted = true;
                 }
             }
-            animateAndSwap(clickedIndex, this::checkSolved);
+            animateAndSwap(clickedIndex, 80, this::checkSolved);
         } else {
             Toast.makeText(getContext(), "no se puede mover", Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void animateAndSwap(int clickedIndex, Runnable onEnd) {
+    private void animateAndSwap(int clickedIndex, int duration, Runnable onEnd) {
         isAnimating = true;
         TextView clickedView = vTv.get(clickedIndex);
         TextView pivotView = vTv.get(pivot);
@@ -237,7 +280,7 @@ public abstract class PuzzleFragment extends Fragment {
         clickedView.animate()
                 .translationX(dx)
                 .translationY(dy)
-                .setDuration(80)
+                .setDuration(duration)
                 .withEndAction(() -> {
                     swap(pivot, clickedIndex);
                     clickedView.setTranslationX(0);
@@ -335,7 +378,7 @@ public abstract class PuzzleFragment extends Fragment {
     private void shufflePuzzle() {
         if (isAnimating) return;
         canStartTimer = false;
-        moveHistory.clear();
+        // No limpiamos moveHistory para permitir que el backtrack del 5x5 funcione tras varios shuffles
         final int totalMoves;
         if (size == 3) totalMoves = 30;
         else if (size == 4) totalMoves = 65;
@@ -351,7 +394,7 @@ public abstract class PuzzleFragment extends Fragment {
                     int currentPivotBeforeMove = pivot;
                     int move = getRandomValidMove(random, lastPivot);
                     lastPivot = currentPivotBeforeMove;
-                    animateAndSwap(move, this);
+                    animateAndSwap(move, 25, this);
                 } else {
                     canStartTimer = true;
                 }
@@ -413,7 +456,7 @@ public abstract class PuzzleFragment extends Fragment {
             public void run() {
                 if (!moveHistory.isEmpty()) {
                     int targetIndex = moveHistory.remove(moveHistory.size() - 1);
-                    animateAndSwap(targetIndex, this);
+                    animateAndSwap(targetIndex, 25, this);
                 } else {
                     isSolving = false;
                     Toast.makeText(getContext(), "¡Solucionado!", Toast.LENGTH_SHORT).show();
@@ -445,7 +488,7 @@ public abstract class PuzzleFragment extends Fragment {
             @Override
             public void run() {
                 if (step < path.size()) {
-                    animateAndSwap(path.get(step), this);
+                    animateAndSwap(path.get(step), 25, this);
                     step++;
                 } else {
                     isSolving = false;
