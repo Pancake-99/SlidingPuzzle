@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="#071013">
 
-    <!-- los botones de tamaño arriba -->
+    <!--botones de modo-->
     <LinearLayout
         android:id="@+id/size_container"
         android:layout_width="match_parent"
@@ -51,7 +51,7 @@
             android:fontFamily="@font/silkscreen_bold"/>
     </LinearLayout>
 
-    <!-- Fila superior con guía y cronómetro -->
+    <!--guia y timer-->
     <LinearLayout
         android:id="@+id/top_row"
         android:layout_width="match_parent"
@@ -73,7 +73,7 @@
             android:layout_marginStart="16dp" />
     </LinearLayout>
 
-    <!-- el grid del puzzle en el centro -->
+    <!--cuadricula principal-->
     <GridLayout
         android:id="@+id/puzzle_grid"
         android:layout_width="wrap_content"
@@ -83,7 +83,7 @@
         android:layout_marginTop="8dp"
         android:padding="8dp" />
 
-    <!-- botones de control abajo -->
+    <!--controles-->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

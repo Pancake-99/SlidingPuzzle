@@ -18,14 +18,17 @@ public class TimerFragment extends Fragment {
 
     private TextView tvTimer;
     private long startTime = 0L;
+    //el handler sirve para agendar tareas a futuro
     private Handler handler = new Handler();
     private boolean isRunning = false;
     private String lastFormattedTime = "00:00.000";
 
+    //el runnable es el codigo que se repite para actualizar el texto
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
             if (isRunning) {
+                //systemclock da el tiempo real desde que prendio el cel
                 long millis = SystemClock.elapsedRealtime() - startTime;
                 int seconds = (int) (millis / 1000);
                 int minutes = seconds / 60;
@@ -34,6 +37,7 @@ public class TimerFragment extends Fragment {
 
                 lastFormattedTime = String.format(Locale.getDefault(), "%02d:%02d.%03d", minutes, seconds, milliseconds);
                 tvTimer.setText(lastFormattedTime);
+                //se vuelve a llamar a si mismo en 10 milisegundos
                 handler.postDelayed(this, 10);
             }
         }
@@ -47,6 +51,7 @@ public class TimerFragment extends Fragment {
         return view;
     }
 
+    //arranca el reloj
     public void startTimer() {
         if (!isRunning) {
             startTime = SystemClock.elapsedRealtime();
@@ -55,17 +60,20 @@ public class TimerFragment extends Fragment {
         }
     }
 
+    //frena el reloj
     public void stopTimer() {
         isRunning = false;
         handler.removeCallbacks(runnable);
     }
 
+    //vuelve a cero
     public void resetTimer() {
         stopTimer();
         lastFormattedTime = "00:00.000";
         tvTimer.setText(lastFormattedTime);
     }
 
+    //devuelve el tiempo actual en texto
     public String getFormattedTime() {
         return lastFormattedTime;
     }

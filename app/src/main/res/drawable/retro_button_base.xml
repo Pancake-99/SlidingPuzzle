@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Horizontal bar: full width, but inset from top and bottom -->
+    <!--barra horizontal-->
     <item
         android:top="4dp"
         android:bottom="4dp">
@@ -8,7 +8,7 @@
             <solid android:color="#FFFFFF" />
         </shape>
     </item>
-    <!-- Vertical bar: full height, but inset from left and right -->
+    <!--barra vertical-->
     <item
         android:left="4dp"
         android:right="4dp">

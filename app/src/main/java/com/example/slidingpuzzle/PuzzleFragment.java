@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
+import java.util.Stack; //pila para pasos
 
 public abstract class PuzzleFragment extends Fragment {
 
@@ -44,13 +45,15 @@ public abstract class PuzzleFragment extends Fragment {
     private GridLayout puzzleGrid;
     private GridLayout guideGrid;
     private List<TextView> vTv = new ArrayList<>();
-    private int pivot;
+    private int pivot; //hueco vacio
     private Bitmap[] tileBitmaps;
     private boolean isAnimating = false;
     private boolean timerStarted = false;
     private boolean canStartTimer = false; 
     
-    private List<Integer> moveHistory = new ArrayList<>();
+    //pila para backtracking
+    private Stack<Integer> miPilaDePasos = new Stack<>();
+    
     private boolean isSolving = false;
     private TimerFragment timerFragment;
 
@@ -70,12 +73,12 @@ public abstract class PuzzleFragment extends Fragment {
         puzzleGrid = view.findViewById(R.id.puzzle_grid);
         guideGrid = view.findViewById(R.id.guide_grid);
         
-        //botones de tamaño
+        //cambio de dificultad
         view.findViewById(R.id.btn3x3).setOnClickListener(v -> ((MainActivity)getActivity()).changeSizeWithConfirmation(3));
         view.findViewById(R.id.btn4x4).setOnClickListener(v -> ((MainActivity)getActivity()).changeSizeWithConfirmation(4));
         view.findViewById(R.id.btn5x5).setOnClickListener(v -> ((MainActivity)getActivity()).changeSizeWithConfirmation(5));
 
-        //pick image
+        //boton para foto
         Button btnPick = view.findViewById(R.id.btnPickImage);
         btnPick.setOnClickListener(v -> ((MainActivity)getActivity()).showImagePickerDialog());
 
@@ -89,7 +92,7 @@ public abstract class PuzzleFragment extends Fragment {
         btnSolve.setTextColor(Color.parseColor("#071013"));
         btnSolve.setOnClickListener(v -> showSolveConfirmation());
         
-        //cada fragmento de puzzle crea su propio cronometro
+        //timer
         timerFragment = new TimerFragment();
         getChildFragmentManager().beginTransaction()
                 .replace(R.id.timer_holder, timerFragment)
@@ -103,16 +106,19 @@ public abstract class PuzzleFragment extends Fragment {
         return view;
     }
 
+    //corta la imagen en cuadros
     private void prepareImageTiles() {
         try {
             Uri uri = Uri.parse(imageUriString);
             InputStream is = getContext().getContentResolver().openInputStream(uri);
             Bitmap source = BitmapFactory.decodeStream(is);
             is.close();
+            //corrige si la foto salio rotada
             source = rotateBitmapIfRequired(source, uri);
             int width = source.getWidth();
             int height = source.getHeight();
             int minSide = Math.min(width, height);
+            //recorte cuadrado central
             Bitmap cropped = Bitmap.createBitmap(source, (width - minSide) / 2, (height - minSide) / 2, minSide, minSide);
             tileBitmaps = new Bitmap[size * size];
             int pieceSide = minSide / size;
@@ -123,11 +129,12 @@ public abstract class PuzzleFragment extends Fragment {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(getContext(), "Error al cargar Imagen", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "error con la imagen", Toast.LENGTH_SHORT).show();
             tileBitmaps = null;
         }
     }
 
+    //lee orientacion de la foto exif
     private Bitmap rotateBitmapIfRequired(Bitmap img, Uri selectedImage) throws Exception {
         InputStream input = getContext().getContentResolver().openInputStream(selectedImage);
         ExifInterface ei;
@@ -145,6 +152,7 @@ public abstract class PuzzleFragment extends Fragment {
         }
     }
 
+    //giro de pixeles con matriz
     private static Bitmap rotateImage(Bitmap img, int degree) {
         Matrix matrix = new Matrix();
         matrix.postRotate(degree);
@@ -153,14 +161,29 @@ public abstract class PuzzleFragment extends Fragment {
         return rotatedImg;
     }
 
+    //random de una de las 4 puntas
+    private int elegirEsquinaAlAzar() {
+        int[] esquinas = {
+            0,
+            size - 1,
+            size * (size - 1),
+            size * size - 1
+        };
+        Random r = new Random();
+        return esquinas[r.nextInt(esquinas.length)];
+    }
+
+    //dibuja el tablero
     private void setupGrid() {
         puzzleGrid.removeAllViews();
         puzzleGrid.setRowCount(size);
         puzzleGrid.setColumnCount(size);
         vTv.clear();
-        moveHistory.clear();
+        miPilaDePasos.clear(); //limpia historial
+        
         int totalPieces = size * size;
-        pivot = totalPieces - 1;
+        pivot = elegirEsquinaAlAzar(); //hueco inicial
+        
         for (int i = 0; i < totalPieces; i++) {
             TextView tv = new TextView(getContext());
             GridLayout.LayoutParams params = new GridLayout.LayoutParams();
@@ -174,7 +197,8 @@ public abstract class PuzzleFragment extends Fragment {
             tv.setClipToOutline(true);
             tv.setTextColor(Color.parseColor("#071013"));
             tv.setTypeface(ResourcesCompat.getFont(getContext(), R.font.silkscreen_bold));
-            tv.setTag(i);
+            tv.setTag(i); //id de la pieza
+            
             if (i == pivot) {
                 tv.setText(""); 
                 tv.setBackgroundColor(Color.TRANSPARENT); 
@@ -199,6 +223,7 @@ public abstract class PuzzleFragment extends Fragment {
         setupGuideGrid();
     }
 
+    //tablero chico de ayuda
     private void setupGuideGrid() {
         if (guideGrid == null) return;
         guideGrid.removeAllViews();
@@ -216,22 +241,19 @@ public abstract class PuzzleFragment extends Fragment {
             tv.setLayoutParams(params);
             tv.setGravity(android.view.Gravity.CENTER);
             tv.setTextSize(size > 4 ? 6 : 8);
-            // No usamos rounded corners para la guía
             tv.setClipToOutline(false);
             tv.setTextColor(Color.parseColor("#071013"));
             tv.setTypeface(ResourcesCompat.getFont(getContext(), R.font.silkscreen_bold));
             
-            if (i == totalPieces - 1) {
+            if (i == pivot) {
                 tv.setText("");
                 tv.setBackgroundColor(Color.TRANSPARENT);
             } else {
                 if (tileBitmaps != null && tileBitmaps[i] != null) {
                     tv.setText("");
-                    // Drawable cuadrado para la imagen
                     tv.setBackground(new BitmapDrawable(getResources(), tileBitmaps[i]));
                 } else {
                     tv.setText(String.valueOf(i + 1));
-                    // Color sólido cuadrado
                     tv.setBackgroundColor(getTileColor(i));
                 }
             }
@@ -239,22 +261,26 @@ public abstract class PuzzleFragment extends Fragment {
         }
     }
 
+    //colores arcade
     private int getTileColor(int i) {
         String[] colors = {"#D81E5B", "#00CECB", "#FF9F1C"};
         return Color.parseColor(colors[i % colors.length]);
     }
 
+    //unidades dp a px
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round((float) dp * density);
     }
 
+    //click en pieza
     private void handleMove(int clickedIndex) {
         if (isAnimating) return;
         int pRow = pivot / size;
         int pCol = pivot % size;
         int cRow = clickedIndex / size;
         int cCol = clickedIndex % size;
+        //vecino directo
         if ((pRow == cRow && Math.abs(pCol - cCol) == 1) || (pCol == cCol && Math.abs(pRow - cRow) == 1)) {
             if (canStartTimer && !timerStarted) {
                 if (timerFragment != null) {
@@ -264,16 +290,17 @@ public abstract class PuzzleFragment extends Fragment {
             }
             animateAndSwap(clickedIndex, 80, this::checkSolved);
         } else {
-            Toast.makeText(getContext(), "no se puede mover", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "bloqueado", Toast.LENGTH_SHORT).show();
         }
     }
 
+    //movimiento con animacion
     private void animateAndSwap(int clickedIndex, int duration, Runnable onEnd) {
         isAnimating = true;
         TextView clickedView = vTv.get(clickedIndex);
         TextView pivotView = vTv.get(pivot);
         int oldPivot = pivot;
-        clickedView.setZ(10);
+        clickedView.setZ(10); //sobre los demas
         pivotView.setVisibility(View.INVISIBLE);
         float dx = (float) pivotView.getLeft() - clickedView.getLeft();
         float dy = (float) pivotView.getTop() - clickedView.getTop();
@@ -290,13 +317,17 @@ public abstract class PuzzleFragment extends Fragment {
                     clickedView.setVisibility(View.VISIBLE);
                     pivot = clickedIndex;
                     isAnimating = false;
+                    
+                    //guarda paso si no es solve
                     if (!isSolving) {
-                        if (!moveHistory.isEmpty() && clickedIndex == moveHistory.get(moveHistory.size() - 1)) {
-                            moveHistory.remove(moveHistory.size() - 1);
+                        //limpieza de pila si vuelve atras
+                        if (!miPilaDePasos.isEmpty() && clickedIndex == miPilaDePasos.peek()) {
+                            miPilaDePasos.pop();
                         } else {
-                            moveHistory.add(oldPivot);
+                            miPilaDePasos.push(oldPivot);
                         }
                     }
+                    
                     if (onEnd != null) {
                         onEnd.run();
                     }
@@ -304,6 +335,7 @@ public abstract class PuzzleFragment extends Fragment {
                 .start();
     }
 
+    //revisa si ganaste
     private void checkSolved() {
         boolean isSolved = true;
         for (int i = 0; i < vTv.size(); i++) {
@@ -318,36 +350,38 @@ public abstract class PuzzleFragment extends Fragment {
                 String finalTime = timerFragment.getFormattedTime();
                 showHighscorePrompt(finalTime);
             }
-            Toast.makeText(getContext(), "¡Ganaste!", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Ganaste!", Toast.LENGTH_LONG).show();
             timerStarted = false;
             canStartTimer = false;
-            moveHistory.clear();
+            miPilaDePasos.clear();
         }
     }
 
+    //pide nombre para record
     private void showHighscorePrompt(String time) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("¡Nuevo Record!");
-        builder.setMessage("Tu tiempo: " + time + "\nEscribe tu nombre:");
+        builder.setTitle("record");
+        builder.setMessage("tiempo: " + time + "\nnombre:");
         final EditText input = new EditText(getContext());
         input.setTypeface(ResourcesCompat.getFont(getContext(), R.font.silkscreen_bold));
         builder.setView(input);
-        builder.setPositiveButton("Guardar", (dialog, which) -> {
+        builder.setPositiveButton("listo", (dialog, which) -> {
             String name = input.getText().toString().trim();
-            if (name.isEmpty()) name = "Jugador Anonimo";
+            if (name.isEmpty()) name = "anonimo";
             HighscoreDbHelper dbHelper = new HighscoreDbHelper(getContext());
             dbHelper.addScore(name, time, size + "x" + size);
-            Toast.makeText(getContext(), "Puntaje guardado", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "guardado", Toast.LENGTH_SHORT).show();
         });
-        builder.setNegativeButton("Cancelar", null);
+        builder.setNegativeButton("chau", null);
         builder.show();
     }
 
+    //confirmacion shuffle
     private void showShuffleConfirmation() {
         new AlertDialog.Builder(getContext())
-                .setTitle("Mezclar piezas")
-                .setMessage("¿Seguro que quieres mezclar? Se va a reiniciar el tiempo.")
-                .setPositiveButton("Sí", (dialog, which) -> {
+                .setTitle("Mezclar?")
+                .setMessage("Se reiniciara el tiempo")
+                .setPositiveButton("Si", (dialog, which) -> {
                     shufflePuzzle();
                     resetTimer();
                 })
@@ -355,18 +389,20 @@ public abstract class PuzzleFragment extends Fragment {
                 .show();
     }
 
+    //confirmacion solve
     private void showSolveConfirmation() {
         new AlertDialog.Builder(getContext())
-                .setTitle("¿Resolver automáticamente?")
-                .setMessage("El tiempo se va a reiniciar porque no cuenta como victoria.")
-                .setPositiveButton("Dale", (dialog, which) -> {
+                .setTitle("resolver")
+                .setMessage("el tiempo se resetea")
+                .setPositiveButton("si", (dialog, which) -> {
                     resetTimer();
                     solvePuzzle();
                 })
-                .setNegativeButton("No, yo puedo", null)
+                .setNegativeButton("no", null)
                 .show();
     }
 
+    //limpia timer
     private void resetTimer() {
         if (timerFragment != null) {
             timerFragment.resetTimer();
@@ -375,10 +411,10 @@ public abstract class PuzzleFragment extends Fragment {
         }
     }
 
+    //mueve piezas al azar
     private void shufflePuzzle() {
         if (isAnimating) return;
         canStartTimer = false;
-        // No limpiamos moveHistory para permitir que el backtrack del 5x5 funcione tras varios shuffles
         final int totalMoves;
         if (size == 3) totalMoves = 30;
         else if (size == 4) totalMoves = 65;
@@ -402,6 +438,7 @@ public abstract class PuzzleFragment extends Fragment {
         }.run();
     }
 
+    //movimiento random legal
     private int getRandomValidMove(Random random, int excludeIndex) {
         int pRow = pivot / size;
         int pCol = pivot % size;
@@ -419,6 +456,7 @@ public abstract class PuzzleFragment extends Fragment {
         return validMoves.get(random.nextInt(validMoves.size()));
     }
 
+    //swapea vistas en la lista
     private void swap(int a, int b) {
         TextView tvA = vTv.get(a);
         TextView tvB = vTv.get(b);
@@ -439,35 +477,42 @@ public abstract class PuzzleFragment extends Fragment {
         tvB.setTextColor(colorA);
     }
 
+    //elige algoritmo
     private void solvePuzzle() {
         if (isAnimating) return;
-        if (size == 5) backtrackSolution();
-        else solveWithAStar();
+        if (size >= 4) {
+            resolverPasoAPaso();
+        } else {
+            //a* para el chiquito
+            solveWithAStar();
+        }
     }
 
-    private void backtrackSolution() {
-        if (moveHistory.isEmpty()) {
-            Toast.makeText(getContext(), "Ya esta listo o no se como volver", Toast.LENGTH_SHORT).show();
+    //backtrack usando la pila
+    private void resolverPasoAPaso() {
+        if (miPilaDePasos.isEmpty()) {
+            Toast.makeText(getContext(), "listo", Toast.LENGTH_SHORT).show();
             return;
         }
         isSolving = true;
         new Runnable() {
             @Override
             public void run() {
-                if (!moveHistory.isEmpty()) {
-                    int targetIndex = moveHistory.remove(moveHistory.size() - 1);
-                    animateAndSwap(targetIndex, 25, this);
+                if (!miPilaDePasos.isEmpty()) {
+                    int destino = miPilaDePasos.pop();
+                    animateAndSwap(destino, 25, this);
                 } else {
                     isSolving = false;
-                    Toast.makeText(getContext(), "¡Solucionado!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "listo", Toast.LENGTH_SHORT).show();
                 }
             }
         }.run();
     }
 
+    //busca solucion optima
     private void solveWithAStar() {
         if (size > 3) {
-            Toast.makeText(getContext(), "Esto va a tardar un ratito...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "eeeeeeeeeeeee", Toast.LENGTH_SHORT).show();
         }
         List<Integer> currentState = new ArrayList<>();
         for (TextView tv : vTv) {
@@ -478,10 +523,11 @@ public abstract class PuzzleFragment extends Fragment {
             isSolving = true;
             executeAStarSolution(solutionPath);
         } else {
-            Toast.makeText(getContext(), "No encontre solucion", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "sin salida", Toast.LENGTH_SHORT).show();
         }
     }
 
+    //mueve piezas segun ruta de a*
     private void executeAStarSolution(List<Integer> path) {
         new Runnable() {
             int step = 0;
@@ -492,12 +538,13 @@ public abstract class PuzzleFragment extends Fragment {
                     step++;
                 } else {
                     isSolving = false;
-                    moveHistory.clear();
+                    miPilaDePasos.clear();
                 }
             }
         }.run();
     }
 
+    //core del a* busca menor f = g + h
     private List<Integer> findPath(List<Integer> start) {
         PriorityQueue<Node> openSet = new PriorityQueue<>(Comparator.comparingInt(n -> n.f));
         Set<List<Integer>> closedSet = new HashSet<>();
@@ -527,6 +574,7 @@ public abstract class PuzzleFragment extends Fragment {
         return null;
     }
 
+    //distancia manhattan: suma de pasos a destino
     private int getHeuristic(List<Integer> state) {
         int dist = 0;
         for (int i = 0; i < state.size(); i++) {
@@ -542,6 +590,7 @@ public abstract class PuzzleFragment extends Fragment {
         return dist;
     }
 
+    //nodo para grafo de estados
     private static class Node {
         List<Integer> state;
         int g, h, f;
@@ -555,6 +604,7 @@ public abstract class PuzzleFragment extends Fragment {
             this.movedIndex = movedIndex;
             this.parent = parent;
         }
+        //arma lista de movimientos
         List<Integer> getPath() {
             List<Integer> path = new ArrayList<>();
             Node curr = this;

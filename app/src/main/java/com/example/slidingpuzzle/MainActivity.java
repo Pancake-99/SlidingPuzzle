@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private TimerFragment timerFragment;
     private Uri tempImageUri;
 
-    //esto es para elegir una foto de la galeria
+    //elegir foto galeria
     private final ActivityResultLauncher<String> mGetContent = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
             uri -> {
@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
             }
     );
 
-    //esto es para sacar una foto con la camara
+    //foto con camara
     private final ActivityResultLauncher<Uri> mTakePicture = registerForActivityResult(
             new ActivityResultContracts.TakePicture(),
             success -> {
@@ -47,14 +47,14 @@ public class MainActivity extends AppCompatActivity {
             }
     );
 
-    //pedir permiso de camara
+    //permiso camara
     private final ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(
             new ActivityResultContracts.RequestPermission(),
             isGranted -> {
                 if (isGranted) {
                     openCamera();
                 } else {
-                    Toast.makeText(this, "Permiso de camara denegado", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "permiso denegado", Toast.LENGTH_SHORT).show();
                 }
             }
     );
@@ -62,25 +62,27 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //pantalla completa sin bordes
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+        //ajuste de padding para no tapar con botones del sistema
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        //el boton de ayuda "?"
+        //boton ayuda
         findViewById(R.id.btn_help).setOnClickListener(v -> showAppTour());
 
-        //el boton de records
+        //boton records
         findViewById(R.id.btn_highscores).setOnClickListener(v -> showHighscores());
 
-        //por defecto que empiece en 3x3
+        //arranque inicial
         if (savedInstanceState == null) {
             loadPuzzleFragment();
             
-            //checar si es la primera vez que abre la app
+            //tutorial si es primera vez
             SharedPreferences prefs = getSharedPreferences("puzzle_prefs", MODE_PRIVATE);
             boolean firstTime = prefs.getBoolean("first_time", true);
             if (firstTime) {
@@ -90,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //cambio a pantalla de records
     private void showHighscores() {
         getSupportFragmentManager().beginTransaction()
                 .setCustomAnimations(
@@ -103,10 +106,11 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
     }
 
+    //menu galeria o camara
     public void showImagePickerDialog() {
-        String[] options = {"Galeria", "Camara"};
+        String[] options = {"galeria", "camara"};
         new AlertDialog.Builder(this)
-                .setTitle("Elige una foto")
+                .setTitle("Elige una opción de imagen")
                 .setItems(options, (dialog, which) -> {
                     if (which == 0) {
                         mGetContent.launch("image/*");
@@ -117,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
+    //chequeo permiso camara
     private void checkCameraPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             openCamera();
@@ -125,15 +130,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //abre camara y genera uri temporal
     private void openCamera() {
         ContentValues values = new ContentValues();
-        values.put(MediaStore.Images.Media.TITLE, "New Picture");
-        values.put(MediaStore.Images.Media.DESCRIPTION, "From Camera");
+        values.put(MediaStore.Images.Media.TITLE, "new picture");
+        values.put(MediaStore.Images.Media.DESCRIPTION, "from camera");
         tempImageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
 
         mTakePicture.launch(tempImageUri);
     }
 
+    //actualiza imagen elegida
     private void onImagePicked(Uri uri) {
         currentImageUri = uri.toString();
         loadPuzzleFragment();
@@ -142,28 +149,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //tutorial del juego
     private void showAppTour() {
         new AlertDialog.Builder(this)
-                .setTitle("¡Bienvenido al Puzzle!")
-                .setMessage("Aquí tienes los pasos básicos:\n\n" +
-                        "1. Elige un tamaño (3x3, 4x4 o 5x5).\n" +
-                        "2. Usa 'Pick Image' si quieres jugar con una foto tuya.\n" +
-                        "3. Dale a 'Shuffle' para mezclar las piezas y activar el cronómetro.\n" +
-                        "4. ¡Desliza las piezas para ordenarlas!\n" +
-                        "5. Si te trabas, 'Solve' te ayuda (pero reinicia el tiempo).\n" +
-                        "6. ¡Consulta tus mejores tiempos en el 'Hall of Fame'!")
-                .setPositiveButton("¡Entendido!", null)
+                .setTitle("Bienvenido")
+                .setMessage("Pasos basicos:\n\n" +
+                        "1. Elige un tamaño de puzzle.\n" +
+                        "2. Usa 'imagen' para poner la foto que quieras.\n" +
+                        "3. Toca a 'mezclar'.\n" +
+                        "4. Resuelve el puzzle lo mas rápido que puedas.\n" +
+                        "5. 'resolver' completara el puzzle en caso de que te rindas.\n" +
+                        "6. Mira tus records.")
+                .setPositiveButton("Ok", null)
                 .show();
     }
 
-    //metodo para avisar antes de cambiar de tamaño
+    //aviso cambio tamaño
     public void changeSizeWithConfirmation(int newSize) {
         if (newSize == currentSize) return;
 
         new AlertDialog.Builder(this)
-                .setTitle("¿Cambiar tamaño?")
-                .setMessage("Se va a reiniciar el puzzle y el tiempo.")
-                .setPositiveButton("Sí", (dialog, which) -> {
+                .setTitle("Cambiar de tamaño?")
+                .setMessage("se reiniciara el tiempo")
+                .setPositiveButton("Si", (dialog, which) -> {
                     currentSize = newSize;
                     loadPuzzleFragment();
                     if (timerFragment != null) {
@@ -174,15 +182,17 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
+    //getter timer
     public TimerFragment getTimerFragment() {
         return timerFragment;
     }
 
+    //setter timer
     public void setTimerFragment(TimerFragment timerFragment) {
         this.timerFragment = timerFragment;
     }
 
-    //metodo para decidir que fragmento cargar segun el tamaño
+    //elige que fragmento de puzzle cargar
     private void loadPuzzleFragment() {
         Fragment fragment;
         switch (currentSize) {
@@ -200,7 +210,7 @@ public class MainActivity extends AppCompatActivity {
         loadFragment(fragment);
     }
 
-    //el que hace el cambio de fragmento de verdad
+    //reemplazo de fragmento
     private void loadFragment(Fragment fragment) {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, fragment)

@@ -28,9 +28,11 @@ public class HighscoresFragment extends Fragment {
         LinearLayout list = view.findViewById(R.id.scores_list);
         Button btnBack = view.findViewById(R.id.btn_back);
 
+        //db de los records
         HighscoreDbHelper dbHelper = new HighscoreDbHelper(getContext());
         List<HighscoreDbHelper.Score> scores = dbHelper.getAllScores();
 
+        //fuentes arcade
         Typeface regularFont = ResourcesCompat.getFont(getContext(), R.font.silkscreen_regular);
         Typeface boldFont = ResourcesCompat.getFont(getContext(), R.font.silkscreen_bold);
 
@@ -43,7 +45,7 @@ public class HighscoresFragment extends Fragment {
             empty.setGravity(Gravity.CENTER);
             list.addView(empty);
         } else {
-            // Header row in Spanish
+            //titulos de la tabla
             list.addView(createScoreRow("#", "NOMBRE", "TIEMPO", "MODO", Color.parseColor("#F7F7FF"), boldFont));
 
             for (int i = 0; i < scores.size(); i++) {
@@ -52,27 +54,31 @@ public class HighscoresFragment extends Fragment {
                 int position = i + 1;
                 String posStr = getOrdinal(position);
                 
+                //colores para el podio
                 int color = Color.parseColor("#F7F7FF");
                 if (position == 1) color = Color.parseColor("#FF9F1C");
                 else if (position == 2) color = Color.parseColor("#00CECB");
                 else if (position == 3) color = Color.parseColor("#D81E5B");
 
+                //corta nombres muy largos
                 String name = s.getName().length() > 8 ? s.getName().substring(0, 8) : s.getName();
                 
                 list.addView(createScoreRow(posStr, name.toUpperCase(), s.getTime(), s.getSize(), color, regularFont));
             }
         }
 
+        //vuelve atras
         btnBack.setOnClickListener(v -> getParentFragmentManager().popBackStack());
 
         return view;
     }
 
+    //crea una fila con 4 columnas
     private LinearLayout createScoreRow(String pos, String name, String time, String size, int color, Typeface font) {
         LinearLayout row = new LinearLayout(getContext());
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setPadding(0, 8, 0, 8);
-        row.setWeightSum(10);
+        row.setWeightSum(10); //divide el ancho en 10 partes
 
         row.addView(createColumn(pos, 2, color, font));
         row.addView(createColumn(name, 3, color, font));
@@ -82,6 +88,7 @@ public class HighscoresFragment extends Fragment {
         return row;
     }
 
+    //un pedazo de texto que se estira segun el peso
     private TextView createColumn(String text, float weight, int color, Typeface font) {
         TextView tv = new TextView(getContext());
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, weight);
@@ -94,8 +101,8 @@ public class HighscoresFragment extends Fragment {
         return tv;
     }
 
+    //pone el simbolito de posicion
     private String getOrdinal(int i) {
-        String[] suffixes = new String[] { "o", "o", "o", "o", "o", "o", "o", "o", "o", "o" };
         return i + "º";
     }
 }
